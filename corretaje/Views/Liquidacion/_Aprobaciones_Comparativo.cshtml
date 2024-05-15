@@ -1,0 +1,163 @@
+﻿@model IEnumerable<corretaje.Clases.Aprobaciones_Comparativo>
+@using System.Globalization;
+
+@{
+    DateTime fecha = new DateTime();
+    fecha = DateTime.Now;
+    string fecha_proc = fecha.ToString("yyyy-MM-dd HH:mm:ss");
+}
+
+<style>
+    .dis_tabla th {
+        font-size: 8px;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+
+    .dis_tabla td {
+        font-size: 10px;
+    }
+</style>
+
+<table class="table table-striped table-hover dis_tabla" id="tabla_comparativos">
+    <thead>
+        <tr>
+            @*<th><input type="checkbox" id="todos_aprovaciones_gerencia" checked /></th>*@
+            <th>Dif?</th>
+            <th>Folio Pago</th>
+            <th>Contrato Act.</th>
+            <th>Contrato Ant.</th>
+            <th>Estado Pago</th>
+            <th>Arriendo Act.</th>
+            <th>Arriendo Ant.</th>
+            <th>Com. Act.</th>
+            <th>Com. Ant</th>
+            <th>Descuento Act.</th>
+            <th>Descuento Ant.</th>
+            <th>A. Pagar Act.</th>
+            <th>A. Pagar Ant.</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                @*<td><input type="checkbox" class="aprovaciones_gerencia" id_pago="@item.id_pago" checked name="aprovaciones_gerencia" value="@item.id_pago" /></td>*@
+                <td>@item.Dif</td>
+                <td>@item.id_pago</td>
+                <td>@item.contrato_act</td>
+                <td>@item.contrato_ant</td>
+                <td>@item.estado_pago</td>
+                <td>$ @string.Format("{0:###,###,###0}", float.Parse(item.arriendo_act))</td>
+                <td>$ @string.Format("{0:###,###,###0}", float.Parse(item.arriendo_ant))</td>
+                <td style="text-align: center;">@item.com_act</td>
+                <td style="text-align: center;">@item.com_ant</td>
+                <td>$ @string.Format("{0:###,###,###0}", float.Parse(item.descuento_act))</td>
+                <td>@item.descuento_ant</td>
+                <td>@item.a_pagar_act</td>
+                <td>@item.a_pagar_ant</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+<script>
+
+    $(function () {
+
+        var table = $('#tabla_comparativos').DataTable({
+            "language": { "url": "//cdn.datatables.net/plug-ins/1.10.19/i18n/Spanish.json" },
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    footer : true,
+                    exportOptions: { columns: ':visible' }
+                },
+                {
+                    extend: 'excelHtml5',
+                    footer : true,
+                    exportOptions: { columns: ':visible' }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    orientation: 'landscape',
+                    pageSize: 'LEGAL',
+                    footer : true
+
+                }
+                //,'colvis'
+            ],
+            "order": [[1, 'asc']],
+            //"columnDefs": [{ "targets": 11, "orderable": false },{ "targets": 0, "orderable": false }],
+            "iDisplayLength": 5
+        });
+
+        $("#btn_Liberar_pago_X").click(function () {
+            var datas = [];
+            table.column(0).nodes().to$().each(function (index) {
+                if ($(this).find('.aprovaciones_gerencia').prop('checked')) {
+                    var valor = $(this).find('.aprovaciones_gerencia').val();
+                    datas.push(valor);
+                }
+            });
+
+            if (datas.length >= 1) {
+                cerrar_ventana('#modal_cambio_liberar_pago');
+
+                var param = {
+                    "id_pago": datas,
+                    "estado": 35,
+                    "fecha": $("#fecha_estado_liberar_pago").val(),
+                    "pago_c_gar": 0,
+                    "id_banco": 0,
+                    "tf_num": 0,
+                    "observacion": '',
+                    "fecha_proceso" : '@fecha_proc'
+                };
+
+                pop_up("#resultado_estado", 700, 500, scroll());
+
+                $.ajax({
+                    data: param,
+                    url: "@Url.Action("_CambiarEstadoLiquidacion", "liquidacion")",
+                    type: "post",
+                    async: true,
+                    beforeSend: function(){
+                        $("#cont_resultado_estado").html("Un momento por favor.");
+                    },
+                    success: function (response) {
+                        $("#cont_resultado_estado").html(response);
+                        var param2 = { "fecha": '@fecha_proc' };
+                        $.ajax({
+                            data: param2,
+                            url: "@Url.Action("_Envia_Mail_Cuando_Cambio_Estado_Cuotas", "liquidacion")",
+                            type: "post"
+                        });
+
+                    }
+                });
+            }
+            else {
+                alert("No ha seleccionado pagos.");
+            }
+
+        });
+
+        $('#todos_aprovaciones_gerencia').click(function (event) { //on click
+            var checked = this.checked;
+            table.column(0).nodes().to$().each(function (index) {
+                if (checked) {
+                    $(this).find('.aprovaciones_gerencia').prop('checked', 'checked');
+                } else {
+                    $(this).find('.aprovaciones_gerencia').prop('checked','');
+                }
+            });
+            table.draw();
+        });
+
+    });
+
+</script>

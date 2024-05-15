@@ -1,0 +1,3 @@
+﻿[*.cs]
+
+# IDE0005: El uso de la directiva no es necesario.

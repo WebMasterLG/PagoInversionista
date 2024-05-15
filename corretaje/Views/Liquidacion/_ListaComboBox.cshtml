@@ -1,0 +1,4 @@
+﻿@model IEnumerable<corretaje.Clases.listascombobox>
+@foreach (var item in Model) {
+ <option value="@item.id">@item.descripcion</option>
+}

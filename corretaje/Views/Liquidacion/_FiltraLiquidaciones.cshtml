@@ -1,0 +1,819 @@
+﻿@using corretaje.Models;
+@using corretaje.Clases;
+@using System.Configuration;
+
+@model IEnumerable<corretaje.Clases.liquidaciones>
+
+@{
+    string DirectorioDocumentos = ConfigurationManager.AppSettings.Get("directoriodocumentos");
+    int IdUsuario = int.Parse(Request.Cookies["cookiePerfil"]["usuario"].ToString());
+    int idPerfil = int.Parse(Request.Cookies["cookiePerfil"]["perfil"].ToString());
+    int idSubper = int.Parse(Request.Cookies["cookiePerfil"]["idSubper"].ToString());
+    int idArea = int.Parse(Request.Cookies["cookiePerfil"]["idArea"].ToString());
+    string DirectorioFacturas = ConfigurationManager.AppSettings.Get("rutaSubirFactura");
+
+    DateTime fecha = new DateTime();
+    fecha = DateTime.Now;
+    string ano = fecha.Year.ToString();
+    string ano2 = fecha.Year.ToString();
+    string mes = fecha.Month.ToString();
+    string mes2 = fecha.Month.ToString();
+    string dia = fecha.Day.ToString();
+    if (mes.Length == 1)
+    {
+        mes = "0" + mes;
+        mes2 = "0" + mes2;
+    }
+
+    int tot_com_neta = 0;
+    int tot_com_iva = 0;
+    int tot_descuentos = 0;
+    int tot_a_pagar = 0;
+    //string ruta = "";
+}
+<style>
+    .flota_derecha {
+        float: right;
+    }
+</style>
+<table id="tabla" width="100%" style="font-size:10px;" cellpadding="0" cellspacing="0" class="table table-striped table-condensed table-bordered table-hover display">
+    <thead>
+        <tr id="tit" style="background:#eeefff;">
+            <th><input type="checkbox" name="todos" id="todos"></th>
+            <th style="text-align: center;">Contrato</th>
+            <th style="text-align: center;">Pago</th>
+            <th style="text-align: left;">Mes</th>
+            <th style="text-align: left;">Concepto</th>
+            <th style="text-align: left;">Dirección</th>
+            <th>Nº Dpto.</th>
+            <th>Tipología</th>
+            <th style="text-align:left">Propietario</th>
+            <th><div align="right">Arriendo</div></th>
+            <th style="text-align:left"><div align="center">Estado Arriendo</div></th>
+            <th><div align="right">Com. %</div></th>
+            <th style="width: 60px;"><div align="right">Com. Neta</div></th>
+            <th style="width: 60px;"><div align="right">Com. IVA  </div></th>
+            <th style="width: 60px;"><div align="right">Descuentos</div></th>
+            <th style="width: 60px;"><div align="right">A Pagar</div></th>
+            <th style="text-align: center;">Meses Gracia</th>
+            <th style="text-align: center;">Pago Contra Garantía</th>
+            <th style="text-align: center;">Pago Seguro Arriendo</th>
+            @*<th style="text-align: center;">Cheque Rescatado</th>*@
+            <th style="text-align: center;">Edo Pago</th>
+            <th style="text-align: center;">Forma Pago</th>
+            <th style="text-align: center;">Fecha Pago</th>
+            <th style="text-align: center;">Ejecutivo KAM</th>
+            @*<th><div align="left">Factura N°</div></th>*@
+            @*<th><div align="center">Vigencia Contrarto</div></th>*@
+            <th><div align="center">Estado Propiedad</div></th>
+            <th hidden><div align="center">Mail</div></th>
+            <th><div align="left">Observ.</div></th>
+            <th hidden><div align="left">&nbsp;&nbsp;&nbsp;&nbsp;</div></th>
+            @*<th><div align="right">Acción</div></th>*@
+            <th>&nbsp;&nbsp;&nbsp;&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            tot_a_pagar += int.Parse(item.a_pagar);
+            tot_descuentos += int.Parse(item.descuentos);
+            tot_com_neta += int.Parse(Math.Round(double.Parse(item.com_neta), 0).ToString());
+            tot_com_iva += int.Parse(Math.Round(double.Parse(item.com_iva), 0).ToString());
+            //ruta = DirectorioDocumentos + "/" + item.id_prop_arriendo;
+
+            <tr>
+                <td>
+                    @*<span>Area = @idArea / SubPerf = @idSubper / Perfil = @idPerfil </span>*@
+
+                    @if (idArea == 5) // Operaciones
+                    {
+                        if (item.estado_pago == "T/F Solicitada" || item.estado_pago == "Rechazo Operaciones" || item.estado_pago == "Rechazo Gerencia" || item.estado_pago == "T/F Aprobada" || item.estado_pago == "Rechazo Finanzas")
+                        {
+                            <input type="checkbox" name="chk_cambio_estado" id="chk_cambio_estado" value="@item.id_pago" estado_actual="@item.estado_pago">
+                        }
+
+                    }
+                    else if (idSubper == 6) // Gerencia General
+                    {
+                        if (item.estado_pago == "T/F Aprobada" || item.estado_pago == "Rechazo Gerencia")
+                        {
+                            <input type="checkbox" name="chk_cambio_estado" id="chk_cambio_estado" value="@item.id_pago" estado_actual="@item.estado_pago">
+                        }
+                    }
+                    else if (idArea == 8)
+                    {
+                        if (item.estado_pago == "Pago Liberado" || item.estado_pago == "Rechazo Gerencia" || item.estado_pago == "T/F Solicitada")
+                        {
+                            <input type="checkbox" name="chk_cambio_estado" id="chk_cambio_estado" value="@item.id_pago" estado_actual="@item.estado_pago">
+                        }
+                    }
+                    @*MOD_IDEAL*@else if (idPerfil == 26)
+                    {
+                        <input type="checkbox" name="chk_cambio_estado" id="chk_cambio_estado" value="@item.id_pago" estado_actual="@item.estado_pago">
+                    }@*MOD_IDEAL*@
+
+                    else
+                    {
+                        if (idSubper == 8) // SAC
+                        {
+                            if (item.estado_pago == "Pendiente" || item.estado_pago == "T/F Solicitada" || item.estado_pago == "Rechazo Operaciones")
+                            {
+                                <input type="checkbox" name="chk_cambio_estado" id="chk_cambio_estado" value="@item.id_pago" estado_actual="@item.estado_pago">
+                            }
+                        }
+
+                        else if (idPerfil == 22) // Subgerente Corretaje
+                        {
+                            if (item.estado_pago == "T/F Solicitada")
+                            {
+                                <input type="checkbox" name="chk_cambio_estado" id="chk_cambio_estado" value="@item.id_pago" estado_actual="@item.estado_pago">
+                            }
+                        }
+                    }
+
+                </td>
+                <td>@item.id_contrato</td>
+                <td>@item.id_pago</td>
+                <td>@item.mes</td>
+                <td><span style="color:@item.color_letra" title="@(item.b_repetido == "1" ?  "Repetido"  : "")">@item.concepto</span></td>
+                <td><div style="cursor: pointer" onclick="antecedentes_click(@item.id_prop_arriendo, @item.id_contrato, '#antecedentes_propiedad')">@item.direccion &nbsp;&nbsp;&nbsp;</div></td>
+                <td><div style="cursor: pointer" onclick="antecedentes_click(@item.id_prop_arriendo, @item.id_contrato, '#antecedentes_propiedad')">@item.num_depto &nbsp;&nbsp;&nbsp;</div></td>
+                <td>@item.g_tipologia</td>
+                <td style="cursor: pointer;">
+                    @if (IdUsuario == 10016 || IdUsuario == 10008 || idArea == 7)
+                    {
+                        @*<div style="display: inline-block; font-size: 15px; width: 20%; text-align: center; vertical-align: middle;" onclick="pop_up_Beneficios_Propiedad('#modal_beneficios_propiedad',@item.id_prop_arriendo,@item.id_contrato)" tooltip="Beneficios Propiedad">★</div>*@
+                        if (item.tienebeneficios == "1")
+                        {
+                            <span role="button" class="pointer" tabindex="-1" data-toggle="popover" data-trigger="focus" data-html="true" data-placement="bottom" title="Beneficios Propiedad" data-content="@item.beneficios" style="margin-left:.2em; font-size:12px" tooltip="Beneficios Propiedad">
+                                ★
+                            </span>
+                        }
+
+                    }
+                    <div style="display: inline-block; width: 75%; vertical-align: middle;" onclick="antecedentes_click(@item.id_prop_arriendo, @item.id_contrato, '#antecedentes_propietario')">@item.propietario</div>
+                </td>
+                <td><div align="right">@item.arriendo</div></td>
+                <td><div align="center">@item.estado_arriendo</div></td>
+                <td style="text-align: center;">@item.com_admin_por</td>
+                <td style="text-align: right;" data-order="@int.Parse(Math.Round(double.Parse(item.com_neta), 0).ToString())">$ @String.Format("{0:n0}", int.Parse(Math.Round(double.Parse(item.com_neta), 0).ToString()))</td>
+                <td style="text-align: right;" data-order="@int.Parse(Math.Round(double.Parse(item.com_iva), 0).ToString())">$ @String.Format("{0:n0}", int.Parse(Math.Round(double.Parse(item.com_iva), 0).ToString()))</td>
+                <td style="text-align: right; cursor: pointer;" data-order="@int.Parse(item.descuentos)" onclick="descuentos_click(@item.id_prop_arriendo,'@item.propietario','@item.direccion','@item.num_depto',@item.id_contrato,2)">$ @String.Format("{0:n0}", int.Parse(item.descuentos))</td>
+                <td style="text-align: right;" data-order="@int.Parse(item.a_pagar)">$ @String.Format("{0:n0}", int.Parse(item.a_pagar))</td>
+                <td style="text-align: center;" data-order="@int.Parse(item.mes_gracia)">@item.mes_gracia</td>
+
+                @if (item.b_pago_contra_garantia == "1")
+                {
+                    <td style="text-align: center; background-color:red"><input type="checkbox" class="id_pcg" name="id_pcg" id="id_pcg" value="@item.id_pago" @(item.b_pago_contra_garantia == "1" ? "checked" : "") /></td>
+                }
+                else
+                {
+                    <td style="text-align: center;"><input type="checkbox" class="id_pcg" name="id_pcg" id="id_pcg" value="@item.id_pago" @(item.b_pago_contra_garantia == "1" ? "checked" : "") /></td>
+                }
+                @if (item.b_pago_seguro_arriendo == "1")
+                {
+                    <td style="text-align: center; background-color:red"><input type="checkbox" class="id_psa" name="id_psa" id="id_psa" value="@item.id_pago" @(item.b_pago_seguro_arriendo == "1" ? "checked" : "") @(idPerfil == 1 @*MOD_IDEAL*@  ||  idPerfil == 26 @*MOD_IDEAL*@ ?"":"disabled")/></td>
+                }
+                else
+                {
+                    <td style="text-align: center;"><input type="checkbox" class="id_psa" name="id_psa" id="id_psa" value="@item.id_pago" @(item.b_pago_seguro_arriendo == "1" ? "checked" : "") @(idPerfil == 1 @*MOD_IDEAL*@  ||  idPerfil == 26 @*MOD_IDEAL*@ ?"":"disabled")/></td>
+                }
+                @*<td style="text-align: center;"><input type="checkbox" class="id_chr" name="id_chr" id="id_chr" value="@item.id_pago" @(item.cheque_rescatado == "1" ? "checked" : "") /></td>*@
+                <td><div align="left">@item.estado_pago</div></td>
+                <td style="text-align: center;">@item.forma_pago</td>
+                <td style="text-align:left">@item.tf_fecha</td>
+                <td style="text-align:left">@item.sac_inversionista</td>
+                @*<td>
+            <div align="center">
+                @if (item.folio_factura != "0")
+                {
+                    <a href="~/@DirectorioFacturas/@item.g_archivo_factura" target="_blank">@item.folio_factura</a>
+                }
+
+                @if (item.folio_factura_ilp != "0")
+                {
+                    <a href="~/@DirectorioFacturas/@item.g_archivo_factura_ilp" target="_blank">@item.folio_factura_ilp</a>
+                }
+            </div>
+        </td>*@
+                @*<td><div><span style="color:@item.color_f_termino">@item.f_termino_contrato.Replace(" 0:00:00", "")</span></div></td>*@
+                <td style="text-align: center;">@item.estado_propiedad</td>
+                <td hidden><div align="center">@item.mail</div></td>
+                <td style="text-align: center;">
+                    @if (idArea != 10)
+                    {
+                        if (idSubper != 9)
+                        {
+
+                            if (item.b_comentario == "1")
+                            {
+                                <img onClick="observprop(@item.id_pago,500,350)" src="img/lapiz_rojo.png" title="@item.observacion" style="cursor: pointer" height="12">
+                            }
+                            else
+                            {
+                                <img onClick="observprop(@item.id_pago,500,350)" src="img/lapiz_azul.png" title="@item.observacion" style="cursor: pointer" height="12">
+                            }
+                        }
+                    }
+                </td>
+
+                <td style="text-align: center;" hidden>
+                    @if (idArea != 10)
+                    {
+                        if (idSubper != 9)
+                        {
+                            <img src="~/img/descuentos3.png" title="Cuadro Descuentos" onclick="descuentos_click(@item.id_prop_arriendo,'@item.propietario','@item.direccion','@item.num_depto',@item.id_contrato,1)" id_prop=@item.id_prop_arriendo style="cursor: pointer" height="12">
+                        }
+                    }
+                </td>
+                <td>
+                    <div align="center">
+                        <img title="Historial de cambios de Estado" onClick="historialCambios(@item.id_pago,500,250)" src="~/img/adj.png" height="15">
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr style="background:#eeefff;">
+            <td colspan="12" style="text-align:right"><strong>Sub Totales</strong>&nbsp;&nbsp;</td>
+            <td><div align="right"><strong id="sub_com_neta"></strong></div></td>
+            <td><div align="right"><strong id="sub_com_iva"></strong></div></td>
+            <td><div align="right"><strong id="sub_descuentos"></strong></div></td>
+            <td><div align="right"><strong id="sub_a_pagar"></strong></div></td>
+            <td colspan="10">&nbsp;</td>
+        </tr>
+        <tr style="background:#eeefff;">
+            <td colspan="12" style="text-align:right"><strong>Totales</strong>&nbsp;&nbsp;</td>
+            <td><div align="right"><strong id="com_neta"></strong></div></td>
+            <td><div align="right"><strong id="com_iva"></strong></div></td>
+            <td><div align="right"><strong id="descuentos"></strong></div></td>
+            <td><div align="right"><strong id="a_pagar"></strong></div></td>
+            <td colspan="10">&nbsp;</td>
+        </tr>
+    </tfoot>
+</table>
+
+
+
+<script>
+    $(function () {
+
+        @*var idAreaX = @idArea;
+        var idSubperX = @idSubper;
+        var idPerfilX = @idPerfil;
+
+        $(".estado_inicial").css("pointer-events", "none");
+        $(".btn_oculto").css("display", "none");
+        $(".id_pcg").attr("disabled", true);
+        //$(".id_chr").attr("disabled", true);
+        $("#btn_liquidar_x_autom").css("pointer-events", "none");
+        //$("#btn_liberar_pago_info").css("pointer-events", "none");
+
+        if (idSubperX == 8 ) {  // SubPerfil SAC
+            $("#btn_solicitud_tf").css("pointer-events", "auto");
+            $("#btn_pendiente").css("pointer-events", "auto");
+            $("#btn_enviar_por_mail").css("pointer-events", "auto");
+        }
+
+        if (idAreaX == 8) { // Area Finanzas
+            $("#btn_tf_verificada").css("pointer-events", "auto");
+            $("#btn_re_finanzas").css("display", "inline");
+        }
+
+        if (idAreaX == 5) { // Area Operaciones
+            $("#btn_tf_verificada").css("pointer-events", "auto");
+            $("#btn_aprobar").css("pointer-events", "auto");
+            $("#btn_liquidar_x").css("pointer-events", "auto");
+            $("#btn_re_operaciones").css("display", "inline");
+            $("#btn_re_operaciones").css("pointer-events", "auto");
+            $(".id_pcg").attr("disabled", false);
+            //$(".id_chr").attr("disabled", false);
+            $("#btn_liquidar_x_autom").css("pointer-events", "auto");
+        }
+
+        if ( idPerfilX == 1) { // Perfil Administrador
+            $(".estado_inicial").css("pointer-events", "auto");
+            $("#btn_re_finanzas").css("display", "inline");
+            $("#btn_re_operaciones").css("display", "inline");
+            $("#btn_re_gerencia").css("display", "inline");
+            $("#btn_liberar_pago").css("pointer-events", "auto");
+            $("#btn_liquidar_x_autom").css("pointer-events", "auto");
+        }
+
+        if (idPerfilX == 13) {// Perfil Gerencia General
+            $("#btn_liberar_pago").css("pointer-events", "auto");
+            $("#btn_liberar_pago_info").css("pointer-events", "auto");
+            $("#btn_re_gerencia").css("display", "inline");
+        }*@
+
+
+
+    $(".id_pcg").click(function () {
+        var b_pago_contra_garantia = 0;
+        var id_pago = $(this).val();
+        if ($(this).prop('checked')) { b_pago_contra_garantia = 1; }
+        if (b_pago_contra_garantia == 1) {
+            if (confirm("¿ Quiere MARCAR este pago a 'Pago Contra Garantía' ?")) {
+                var param = { "id_pago": id_pago, "b_pago_contra_garantia": b_pago_contra_garantia };
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("_Marca_Pago_Contra_Garantia", "Liquidacion")",
+                    data: param
+                });
+            } else {
+                $(this).prop('checked', false);
+            }
+        }
+        else {
+            if (confirm("¿ Quiere DESMARCAR este pago de 'Pago Contra Garantía' ?")) {
+                var param = { "id_pago": id_pago, "b_pago_contra_garantia": b_pago_contra_garantia };
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("_Marca_Pago_Contra_Garantia", "Liquidacion")",
+                    data: param
+                });
+            } else {
+                $(this).prop('checked', true);
+            }
+        }
+    });
+
+    $(".id_psa").click(function () {
+        var b_pago_seguro_arriendo = 0;
+        var id_pago = $(this).val();
+        if ($(this).prop('checked')) { b_pago_seguro_arriendo = 1; }
+        if (b_pago_seguro_arriendo == 1) {
+            if (confirm("¿ Quiere MARCAR este pago a 'Pago Seguro Arriendo' ?")) {
+                var param = { "id_pago": id_pago, "b_pago_seguro_arriendo": b_pago_seguro_arriendo };
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("_Marca_Pago_Seguro_Arriendo", "Liquidacion")",
+                    data: param
+                });
+            } else {
+                $(this).prop('checked', false);
+            }
+        }
+        else {
+            if (confirm("¿ Quiere DESMARCAR este pago de 'Pago Seguro Arriendo' ?")) {
+                var param = { "id_pago": id_pago, "b_pago_seguro_arriendo": b_pago_seguro_arriendo };
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("_Marca_Pago_Seguro_Arriendo", "Liquidacion")",
+                    data: param
+                });
+            } else {
+                $(this).prop('checked', true);
+            }
+        }
+    });
+
+    @*$(".id_chr").click(function () {
+        var cheque_rescatado = 0;
+        var id_pago = $(this).val();
+        if ($(this).prop('checked')) { cheque_rescatado = 1; }
+        if (cheque_rescatado == 1) {
+            if (confirm("¿ Quiere MARCAR este cheque como 'Cheque Rescatado' ?")) {
+                var param = { "id_pago": id_pago, "cheque_rescatado": cheque_rescatado };
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("_Marca_Cheque_Rescatado", "Liquidacion")",
+                    data: param
+                });
+            } else {
+                $(this).prop('checked', false);
+            }
+        }
+        else {
+            if (confirm("¿ Quiere DESMARCAR este cheque como 'Cheque Rescatado' ?")) {
+                var param = { "id_pago": id_pago, "cheque_rescatado": cheque_rescatado };
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("_Marca_Cheque_Rescatado", "Liquidacion")",
+                    data: param
+                });
+            } else {
+                $(this).prop('checked', true);
+            }
+        }
+    });*@
+
+        var tabla = $("#tabla").DataTable(
+        {
+            "language": {
+            "sProcessing": "Procesando...",
+            "sLengthMenu": "Mostrar _MENU_ registros",
+            "sZeroRecords": "No se encontraron resultados",
+            "sEmptyTable": "Ningún dato disponible en esta tabla",
+            "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "sInfoPostFix": "",
+            "sSearch": "Buscar:",
+            "sUrl": "",
+            "sInfoThousands": ",",
+            "sLoadingRecords": "Cargando...",
+            "oPaginate": {
+                "sFirst": "Primero",
+                "sLast": "Último",
+                "sNext": "Siguiente",
+                "sPrevious": "Anterior"
+            },
+            "oAria": {
+                "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+            }
+            },
+            "iDisplayLength": 25,
+            "footerCallback": function (row, data, start, end, display) {
+
+                var api = this.api(), data;
+
+                // Remove the formatting to get integer data for summation
+                var intVal = function (i) {
+                    return typeof i === 'string' ?
+                        i.replace(/[\$.]/g, '') * 1 :
+                        typeof i === 'number' ?
+                        i : 0;
+                };
+
+                // Total over all pages
+                com_neta = api.column(12).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                com_iva = api.column(13).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                descuentos = api.column(14).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                a_pagar  = api.column(15).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+
+                // Total over this page
+                sub_com_neta = api.column(12, { page: 'current' }).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                sub_com_iva = api.column(13, { page: 'current' }).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                sub_descuentos = api.column(14, { page: 'current' }).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+                sub_a_pagar  = api.column(15, { page: 'current' }).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+
+                $("#sub_com_neta").html(accounting.formatMoney(sub_com_neta, "$ ", 0, ".", ","));
+                $("#sub_com_iva").html(accounting.formatMoney(sub_com_iva, "$ ", 0, ".", ","));
+                $("#sub_descuentos").html(accounting.formatMoney(sub_descuentos, "$ ", 0, ".", ","));
+                $("#sub_a_pagar").html(accounting.formatMoney(sub_a_pagar, "$ ", 0, ".", ","));
+
+                $("#com_neta").html(accounting.formatMoney(com_neta, "$ ", 0, ".", ","));
+                $("#com_iva").html(accounting.formatMoney(com_iva, "$ ", 0, ".", ","));
+                $("#descuentos").html(accounting.formatMoney(descuentos, "$ ", 0, ".", ","));
+                $("#a_pagar").html(accounting.formatMoney(a_pagar, "$ ", 0, ".", ","));
+
+
+                },
+                dom: 'B<"flota_derecha"lf>rtip',
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'Columnas'
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: 'Excel',
+                        footer: true,
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        filename: 'Solicitudes_Devolucion.xlsx'
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        orientation: 'landscape',
+                        pageSize: 'LEGAL',
+                        text: 'PDF',
+                        footer: true,
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        filename: 'Solicitudes_Devolucion.pdf'
+                    }
+                ]
+            });
+
+        $("#cant_aprobs").html("&nbsp;&nbsp;"+tabla.data().count()+"&nbsp;&nbsp;");
+
+        $("img").click(function () {
+            //id_propiedad="item.id_prop_arriendo" id_contrato="item.id_contrato" id_pago="item.id_pago"
+            //var id_propiedad = $("#subir_imagen").attr("id_propiedad");
+            if ($(this).attr("id") == "subir_imagen") {
+                var id_pago = $(this).attr("id_pago");
+                var id_archivo = "#archivo_" + id_pago;
+                $(id_archivo).click();
+                //alert(id_pago);
+            }
+
+            //if ($(this).attr("id") == "eliminar_archivo") {
+            //    //id_pago="item.id_pago" id_prop="item.id_prop_arriendo" archivo="item.g_file"
+            //    if (confirm("Desea eliminar este archivo?")) {
+            //        var id_pago_p = $(this).attr("id_pago");
+            //        var id_propiedad_p = $(this).attr("id_prop");
+            //        var g_file_p = $(this).attr("archivo");
+            //        eliminar_archivo_pago(id_pago_p, id_propiedad_p, g_file_p);
+            //    }
+            //}
+        });
+
+        $("#todos").click(function () {
+
+            var estado = false;
+            if ($("#pago_garantia").prop("checked")) {
+                estado = true;
+            }
+
+            //var pago_garantia = $("#pago_garantia");
+
+            var allPages = tabla.cells().nodes();
+
+            if ($(this).is(":checked")) {
+                //$("input:checkbox[name='chk_cambio_estado']").prop("checked", true);
+                //$("#tabla").find("input:checkbox[name='chk_cambio_estado']").prop("checked", true);
+                $("input:checkbox[name='chk_cambio_estado']", allPages).prop('checked', true);
+            } else {
+                //$("input:checkbox[name='chk_cambio_estado']").prop("checked", false);
+                //$("#tabla").find("input:checkbox[name='chk_cambio_estado']").prop("checked", false);
+                $("input:checkbox[name='chk_cambio_estado']", allPages).prop('checked', false);
+            }
+
+            $("#pago_garantia").prop("checked", estado);
+
+        });
+
+        $('#tabla [data-toggle="popover"]').popover();
+        tabla.on('draw', function () {
+            $('#tabla [data-toggle="popover"]').popover();
+        });
+
+    });
+</script>
+
+<script>
+
+    function modal_dcto() {
+        pop_up("#modal_descuentos", 850, 700);
+        var prop = $(this).attr("id_prop");
+        var arrendatario = $(this).attr("arrendatario");
+        var propietario = $(this).attr("propietario");
+        var direccion = $(this).attr("direccion");
+        var depto = $(this).attr("depto");
+        var id_contrato = $(this).attr("id_contrato");
+        gastos(prop, 800, 300, arrendatario, propietario, direccion, depto, id_contrato);
+        $("#fade").css("display", "none");
+    }
+
+
+    //function pop_up(pVentana) {
+    //    var ancho = parseInt($(pVentana).css("width").replace("px", ""));
+    //    var alto = parseInt($(pVentana).css("height").replace("px", ""));
+    //    anchoActual = window.innerWidth;
+    //    altoActual = window.innerHeight;
+    //    //alert(anchoActual + " " + altoActual)
+    //    margenTop = Math.round((altoActual - alto) / 2)
+    //    margenLeft = Math.round((anchoActual - ancho) / 2)
+    //    //alert(margenTop + " " + margenLeft)
+    //    if (altoActual < alto) {
+    //        $(".modal").css("top", "5px");
+    //    } else {
+    //        $(".modal").css("top", margenTop + "px");
+    //    }
+    //    if (anchoActual < ancho) {
+    //        $(".modal").css("left", 0);
+    //        $(".modal").css("width", "100%");
+    //    } else {
+    //        $(".modal").css("left", margenLeft + "px");
+    //    }
+    //    if (parseInt(window.innerHeight) > parseInt($("body").height())) {
+    //        $("#fade").height(parseInt(window.innerHeight));
+    //    } else {
+    //        $("#fade").height(parseInt($("body").height()));
+    //    }
+    //    $("#fade").css("display", "block");
+    //    $(pVentana).css("display", "block");
+    //}
+
+    function pop_up_Beneficios_Propiedad(pVentana, id_prop, id_contrato) {
+
+        var ancho = parseInt($(pVentana).width());
+        var alto = parseInt($(pVentana).height());
+        anchoActual = window.innerWidth;
+        altoActual = window.innerHeight;
+        //alert(anchoActual + " " + altoActual)
+        margenTop = Math.round((altoActual - alto) / 2)
+        margenLeft = Math.round((anchoActual - ancho) / 2)
+        //alert(margenTop + " " + margenLeft)
+        if (altoActual < alto) {
+            $(".modal").css("top", "5px");
+        } else {
+            $(".modal").css("top", margenTop + "px");
+        }
+        if (anchoActual < ancho) {
+            $(".modal").css("left", 0);
+            $(".modal").css("width", "100%");
+        } else {
+            $(".modal").css("left", margenLeft + "px");
+        }
+        if (parseInt(window.innerHeight) > parseInt($("body").height())) {
+            $("#fade").height(parseInt(window.innerHeight));
+        } else {
+            $("#fade").height(parseInt($("body").height()));
+        }
+        var param = {
+            "proc":0,
+            "id_prop": id_prop,
+            "id_contrato": id_contrato,
+        }
+        //$("#fade").css("display", "block");
+        $(pVentana).css("display", "block");
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("_Beneficios_Propiedad" + "", "Liquidacion")",
+            data: param,
+            beforeSend: function () {
+                $('#modal_beneficios_propiedad').modal('show');
+                $("#contenido_beneficios").html('Un momento por favor...');
+            },
+            success: function (response) {
+                $("#contenido_beneficios").html(response);
+            },
+            error: function () {
+                $("#contenido_beneficios").html('Error al procesar la solicitud.');
+            }
+        });
+
+    }
+
+    @*$(function () {
+        $(".td_ant_prop").click(function () {
+        //alert("HOLA");
+            var zona = $(this).attr("zona");
+            pop_up("#modal_antecedentes_propietario", 850, 700);
+            var contrato = $(this).attr("id_contrato");
+            var prop = $(this).attr("id_prop");
+            var url = "@Url.Action("formmodprop","propiedades")/" + prop + "?estado=110&id_contrato=" + contrato + "&desde_liquidaciones=1"+zona;
+            $("#frame_modal_antecedentes_propietario").attr("src", url);
+            $("#fade").css("display", "none");
+        //alert(url);
+        });
+    });*@
+
+    function habilitar(value)
+    {
+        if (value == "1" || value == true)
+        {
+            // habilitamos
+            $("#mes_gasto").css("pointer-events", "line");
+            $("#ano_gasto").css("pointer-events", "line");
+        } else if (value == "2" || value == false) {
+            // deshabilitamos
+            $("#mes_gasto").css("pointer-events", "none");
+            $("#ano_gasto").css("pointer-events", "none");
+        }
+    };
+
+    function gastos(id, pAncho, pAlto, arrendatario, propietario, direccion, depto, id_contrato) {
+
+        //_TraeGastos(int propiedad, string mes)
+
+        $("#fecha_gasto").val("");
+        $("#observ_gasto").val("");
+        $("#monto_inver").val("");
+        $("#monto_arrend").val("");
+        $("#monto_total").val("");
+        $("#idContratoGasto").val("");
+
+        $("#prop_gastos").html(propietario);
+        $("#arr_gastos").html(arrendatario);
+        $("#direccion_gastos").html(direccion);
+        $("#depto_gastos").html(depto);
+        $("#id_prop").val(id);
+        $("#idContratoGasto").val(id_contrato);
+
+        var ancho = pAncho;
+        var alto = pAlto;
+        var pVentana = "#gastos";
+        var param = { "propiedad": id , "mes": "@mes", "ano": "@ano" };
+
+        anchoActual = window.innerWidth;
+        altoActual = window.innerHeight;
+
+        margenTop = (((altoActual - alto - 40) / altoActual ) / 2 ) * 100
+        porcTop = margenTop + '%';
+        margenLeft = (((anchoActual - ancho - 50) / anchoActual ) / 2 ) * 100
+        porcLeft = margenLeft + '%';
+
+        if (altoActual < alto + 40) {
+            $(pVentana).css("top","5px");
+        } else {
+            $(pVentana).css("top",porcTop);
+        }
+
+        if (anchoActual < ancho) {
+            $(pVentana).css("left",0);
+            $(pVentana).css("width","100%");
+        } else {
+            $(pVentana).css("left",porcLeft);
+        }
+
+        if (parseInt(window.innerHeight) > parseInt($("body").height()) ) {
+            $("#fade").height(parseInt(window.innerHeight));
+        } else {
+            $("#fade").height(parseInt($("body").height()));
+        }
+        $("#fade").css("display","block");
+        $(pVentana).css("display","block");
+
+        $.ajax({
+            data: param,
+            url: "@Url.Action("_TraeGastos", "propiedades")",
+            type: "get",
+        beforeSend: function(){
+            $("#gastos_interna").html("Un momento por favor.");
+        },
+        success: function (response) {
+            $("#gastos_interna").html(response);
+            }
+        });
+    }
+    $(function () {
+        $("#mes_gasto, #ano_gasto").change(function () {
+            var id_prop = $("#id_prop").val();
+            var mes = $("#mes_gasto").val();
+            var ano = $("#ano_gasto").val()
+            var param = { "propiedad": id_prop, "mes": mes, "ano": ano };
+            $.ajax({
+                data: param,
+                url: "@Url.Action("_TraeGastos", "propiedades")",
+                type: "get",
+                beforeSend: function () {
+                    $("#gastos_interna").html("Un momento por favor.");
+                },
+                success: function (response) {
+                    $("#gastos_interna").html(response);
+                }
+            });
+        });
+       // $('[data-toggle="popover"]').popover();
+    });
+
+    function descuentos_click(prop, propietario, direccion, depto, id_contrato,enabled) {
+        pop_up("#modal_descuentos", 850, 700);
+        if (enabled == "1")
+        {
+            // habilitamos
+            $("#mes_gasto").css("pointer-events", "auto");
+            $("#ano_gasto").css("pointer-events", "auto");
+        } else if (enabled == "2") {
+            // deshabilitamos
+            $("#mes_gasto").css("pointer-events", "none");
+            $("#ano_gasto").css("pointer-events", "none");
+        }
+        gastos(prop, 800, 300, " ", propietario, direccion, depto, id_contrato);
+        $("#fade").css("display", "none");
+    }
+
+    function antecedentes_click(prop, contrato, zona) {
+       // pop_up("#modal_antecedentes_propietario", 850, 700);
+        //var url = "@Url.Action("formmodprop","propiedades")/" + prop + "?estado=110&id_contrato=" + contrato + "&desde_liquidaciones=1" + zona;
+        //$("#frame_modal_antecedentes_propietario").attr("src", url);
+        var fecha_desde = $('#ano').val() + '-' + $('#mes').val() + '-01'
+        var fecha_hasta = $('#ano_fin').val() + '-' + $('#mes_fin').val() + '-01'
+        var param = { "id_propiedad": prop, "fecha_desde": fecha_desde, "fecha_hasta": fecha_hasta };
+        $.ajax({
+            data: param,
+            url: "@Url.Action("VerificadorCartera", "Liquidacion")",
+            type: "POST",
+            beforeSend: function () {
+
+            },
+            success: function (response) {
+                $('#titulo_verificador_cartera').html('')
+                $('#titulo_verificador_cartera').append('REVISIÓN PAGO DE CARTERA CLIENTE ' + response[0]['nombre_propietario']+' / Nº PROPIEDADES TOTALES: ' + response[0]['count_prop'])
+                $('#verificador_cartera').DataTable().clear().draw()
+                $('#verificador_cartera').DataTable().rows.add(response).draw()
+
+
+            }
+        });
+
+        $.ajax({
+            data: param,
+            url: "@Url.Action("VerificadorCarteraObservaciones", "Liquidacion")",
+            type: "POST",
+            beforeSend: function () {
+
+            },
+            success: function (response) {
+                $('#obs_verificador_cartera').html(response)
+            }
+        });
+
+        $('#modal_antecedentes_propietario').modal('show')
+       
+        //$("#fade").css("display", "none");
+    }
+
+   // $('[data-toggle="popover"]').popover();
+
+</script>
+

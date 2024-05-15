@@ -1,0 +1,312 @@
+﻿@model IEnumerable<corretaje.clases.ListadoClientesEnrolamiento>
+
+@{
+    int idArea = int.Parse(Request.Cookies["cookiePerfil"]["idArea"].ToString());
+    int idSubper = int.Parse(Request.Cookies["cookiePerfil"]["idSubper"].ToString());
+    int idPerfil = int.Parse(Request.Cookies["cookiePerfil"]["perfil"].ToString());
+}
+<style>
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 30px;
+        height: 15px;
+    }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 10px;
+            width: 10px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(14px);
+        -ms-transform: translateX(14px);
+        transform: translateX(14px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+</style>
+<script>
+    function ocultar(bloqueado, enrolado, rut) {
+        var el_chk_rut = "#el_chk_rut_" + rut;
+        $(el_chk_rut).hide();
+        if (bloqueado == 0) {
+            if (enrolado == 1) {
+                $(el_chk_rut).show();
+            }
+        }
+    }
+
+
+    function pop_up2(pVentana) {
+        var ancho = parseInt($(pVentana).css("width").replace("px", ""));
+        var alto = parseInt($(pVentana).css("height").replace("px", ""));
+
+        anchoActual = window.innerWidth;
+        altoActual = window.innerHeight;
+        //alert(anchoActual + " " + altoActual)
+
+        margenTop = Math.round((altoActual - alto) / 2)
+        margenLeft = Math.round((anchoActual - ancho) / 2)
+        //alert(margenTop + " " + margenLeft)
+
+        if (altoActual < alto) {
+            $(".modal").css("top", "5px");
+        } else {
+            $(".modal").css("top", margenTop + "px");
+        }
+        if (anchoActual < ancho) {
+            $(".modal").css("left", 0);
+            $(".modal").css("width", "100%");
+        } else {
+            $(".modal").css("left", margenLeft + "px");
+        }
+
+        if (parseInt(window.innerHeight) > parseInt($("body").height())) {
+            $("#fade").height(parseInt(window.innerHeight));
+        } else {
+            $("#fade").height(parseInt($("body").height()));
+        }
+
+        //$("#fade").css("display", "block");
+        $(pVentana).css("display", "block");
+    }
+
+    function cerrar_ventana(pVentana) {
+        $("#fade").css("display", "none");
+        $(pVentana).css("display", "none");
+    }
+</script>
+
+<table style="font-size:10px;" class="table table-striped table-condensed table-bordered table-hover display" id="tbl_enrolamiento">
+    <thead>
+        <tr style="background:#eeefff;">
+            <th>RUT</th>
+            <th>Nombre</th>
+            <th>Fono</th>
+            <th>Celular</th>
+            <th>E-Mail</th>
+            <th>Ejecutivo KAM</th>
+            <th style="width: 30px;">Enrolado</th>
+            <th style="width: 20px;"></th>
+            <th style="width: 20px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.rut</td>
+                <td>@item.nombre</td>
+                <td>@item.fono</td>
+                <td>@item.celular</td>
+                <td>@item.mail</td>
+                <td>@item.sac_inversionista</td>
+                <td style="text-align: center;">
+                    @if (idArea != 10 || idSubper != 9)
+                    {
+                        <label class="switch">
+                            <input type="checkbox" name="enrolar" id="enrolar" class="enrolar" value="@item.rut" @(item.enrolado == "1" ? "checked" : "")>
+                            <span class="slider round"></span>
+                        </label>
+                    }
+                </td>
+                <td style="text-align: center;">
+                    @if (idArea != 10 || idSubper != 9)
+                    {
+                        <img src="~/img/candado.png" width="24" height="20" alt="Enviar Clave" rut="@item.rut" class="reenviar_clave" id="el_chk_rut_@item.rut" style="cursor: pointer;" />
+                    }
+                    <script>
+                        ocultar(@item.bloqueado,@item.enrolado, '@item.rut');
+                    </script>
+                </td>
+                <td style="text-align: center;">
+                    @if (idPerfil == 18 || idPerfil == 1)
+                    {
+                        <img src="~/img/people_icon.png" width="20" height="20" alt="Asociar personas relacionadas." style="cursor: pointer;" rut="@item.rut" class="relacionados" />
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<div id="modal_relacionados" class="modal" style="width: 800px; height:400px; border: 1px solid #ccc; color: #666677; font-size:12px; display:none; padding:20px;  z-index: 55;">
+    <div style="border-bottom:1px solid #ff8000; padding-bottom:10px; ">
+        <div class="celda"><h4><b>Clientes Relacionados</b></h4></div>
+    </div>
+    <div style="font-size:12px; margin-top:10px; overflow: auto; height: 250px;" id="contenido_modal_relacionados">
+
+    </div>
+    <div style="width:100%; text-align:center;  margin-top: 20px;" class="boton_abajo">
+        <div class="celda ancho" style="width:100px; margin-left:10px">
+            <div class="boton" style="width:70px;" onClick="cerrar_ventana('#modal_relacionados')">Cerrar</div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .boton_abajo{
+        position: absolute;
+        bottom: 10px;
+    }
+</style>
+<script>
+
+    $(function () {
+
+        $(".relacionados").click(function () {
+            var rut = $(this).attr("rut");
+            var param = { "rut": rut };
+            $.ajax({
+               data: param,
+               url: "@Url.Action("_ListadoRelaciones", "liquidacion")",
+               type: "POST",
+               beforeSend: function(){
+                   $("#contenido_modal_relacionados").html("Un momento por favor.");
+               },
+               success: function (resp) {
+                   $("#contenido_modal_relacionados").html(resp);
+               }
+            });
+
+            
+            pop_up2("#modal_relacionados");
+        });
+
+        $(".enrolar").click(function () {
+            var rut = $(this).val().split('-');
+            var proceso = 0;
+            var el_chk_rut = "#el_chk_rut_" + $(this).val();
+
+            if ($(this).is(":checked")) {
+                proceso = 1;
+                $(el_chk_rut).show();
+            } else {
+                proceso = 0;
+                $(el_chk_rut).hide();
+            }
+
+            var param = { "rut": rut[0], "proceso": proceso };
+            if (confirm("¿Desea cambiar el estado del enrolamiento?")) {
+                $.ajax({
+                    data: param,
+                    url: "@Url.Action("_EnrolarCliente", "liquidacion")",
+                    type: "POST",
+                    beforeSend: function () {
+                        //$("#listado_busqueda").html("Un momento por favor.");
+                    },
+                    success: function (resp) {
+                        $.each(resp.Resultado, function (i) {
+                            alert(resp.Resultado[i].mensaje);
+                        });
+                    }
+                });
+            } else {
+                 var param = { "sac": 0 };
+                $.ajax({
+                    data: param,
+                    url: "@Url.Action("_ClientesEnrolamiento", "liquidacion")",
+                    type: "POST",
+                    beforeSend: function () {
+                        $("#listado_enrolamiento").html("Un momento por favor.");
+                    },
+                    success: function (response) {
+                        $("#listado_enrolamiento").html(response);
+                    }
+                });
+            }
+            //alert(proceso);
+        });
+
+        $(".reenviar_clave").click(function () {
+            var rut = $(this).attr("rut").split('-');
+            var param = { "rut": rut[0], "proceso": 1  };
+
+            $.ajax({
+               data: param,
+               url: "@Url.Action("_EnrolarCliente", "liquidacion")",
+               type: "POST",
+               beforeSend: function(){
+                   //$("#listado_busqueda").html("Un momento por favor.");
+               },
+               success: function (resp) {
+                   $.each(resp.Resultado, function (i) {
+                       alert(resp.Resultado[i].mensaje);
+                   });
+               }
+            });
+        });
+
+        var tabla = $("#tbl_enrolamiento").DataTable(
+        {
+            "language": {
+                "sProcessing": "Procesando...",
+                "sLengthMenu": "Mostrar _MENU_ registros",
+                "sZeroRecords": "No se encontraron resultados",
+                "sEmptyTable": "Ningún dato disponible en esta tabla",
+                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sSearch": "Buscar:",
+                "sUrl": "",
+                "sInfoThousands": ",",
+                "sLoadingRecords": "Cargando...",
+                "oPaginate": {
+                    "sFirst": "Primero",
+                    "sLast": "Último",
+                    "sNext": "Siguiente",
+                    "sPrevious": "Anterior"
+                },
+                "oAria": {
+                    "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                    "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                }
+            },
+            "iDisplayLength": 50
+            });
+    });
+</script>

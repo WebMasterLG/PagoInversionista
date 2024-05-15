@@ -1,0 +1,143 @@
+﻿@using corretaje.Models;
+@using corretaje.Clases;
+@using System.Configuration;
+@model IEnumerable<corretaje.Clases.BeneficiosPropiedad>
+@{
+    //int id_promesa = ViewBag.id_promesa;
+    int id_contrato = ViewBag.id_contrato;
+    int id_prop = ViewBag.id_prop;
+
+}
+
+<br />
+<table class="table table-bordered table-responsive table-hover table-striped table-editable">
+    <thead>
+        <tr class="salmon" style="background:#eeefff;">
+            <th width="10%"></th>
+            <th style="display:none">Id</th>
+            <th>Beneficios</th>
+            <th style="display:none">Valor</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr data-id="@item.c_item" data-ben="@item.g_glosa1" data-valor="@item.n_valor1">
+                <td style="display:none">
+                    <input disabled type="text" class="id_beneficio" id="c_item_@item.c_item" value="@item.c_item" />
+                </td>
+                <td style="text-align: center;"><input type="checkbox" id="chkIngreso_@item.c_item" name="chkIngreso[]" class="chkIngreso" data-id="@item.c_item" data-ben="@item.g_glosa1" value="@item.c_item" data-valor="@item.n_valor1" /></td>
+
+                <td>
+                    <input disabled type="text" class="descripcion" id="g_glosa1_@item.c_item" value="@item.g_glosa1" />
+                </td>
+                <td style="display:none">
+                    <input disabled type="text" class="n_valor_beneficio" id="n_valor1_@item.c_item" value="@item.n_valor1" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<script>
+    $('[data-toggle="popover"]').popover();
+
+    $(function () {
+        //var id_promesa = id_promesa;
+        var id_contrato = @id_contrato;
+        var id_prop = @id_prop;
+
+        Beneficios_De_Propiedad(id_contrato, id_prop);
+
+        function Beneficios_De_Propiedad(id_contrato,id_prop) {
+            var param = {
+                "proc":2,
+                //"id_promesa": id_promesa,
+                "id_contrato": id_contrato,
+                "id_prop": id_prop
+            };
+        $.ajax({
+            data: param,
+            url: "@Url.Action("Beneficios_Propiedad_Posee", "Liquidacion")",
+            type: "POST",
+            beforeSend: function () {
+                $("#listado_documentos").html("Un momento por favor.");
+            },
+            success: function (response) {
+                var largo = Object.keys(response.Response).length;
+                for (var i = 0; i < largo; i++) {
+                    Seleccionar_Beneficios_Propiedad(response.Response[i].id_ben)
+                }
+            }
+        });
+        }
+        function Seleccionar_Beneficios_Propiedad(id_ben) {
+            $("#chkIngreso_" + id_ben).prop('checked', true);
+        }
+
+    });
+
+
+    
+
+    function Actualiza_Beneficios_De_Propiedad() {
+         //var id_promesa = id_promesa;
+        var id_contrato = @id_contrato;
+        var id_prop = @id_prop;
+
+        opciones = document.getElementsByName("chkIngreso[]");
+       // var seleccionado = false;
+        var chk_seleccionados = "";
+        var chk_NO_seleccionados = "";
+        for (var i = 0; i < opciones.length; i++) {
+            if (opciones[i].checked == true) {
+                if (chk_seleccionados == "") {
+                   // seleccionado = true;
+                    chk_seleccionados += opciones[i].value;
+                }
+                else {
+                  //  seleccionado = true;
+                    chk_seleccionados += "|"+opciones[i].value ;
+                }
+
+            }
+        }
+        for (var i = 0; i < opciones.length; i++) {
+            if (opciones[i].checked == false) {
+                if (chk_NO_seleccionados == "") {
+                   // seleccionado = true;
+                    chk_NO_seleccionados += opciones[i].value;
+                }
+                else {
+                   // seleccionado = true;
+                    chk_NO_seleccionados += "|" + opciones[i].value;
+                }
+
+            }
+        }
+        //alert(chk_seleccionados);
+        var param = {
+            //"id_promesa": id_promesa,
+            "id_contrato": id_contrato,
+            "id_prop": id_prop,
+            "chk_seleccionados": chk_seleccionados,
+            "chk_NO_seleccionados": chk_NO_seleccionados
+        };
+         $.ajax({
+            data: param,
+            url: "@Url.Action("Actualiza_Beneficios_Propiedad", "Liquidacion")",
+            type: "POST",
+            beforeSend: function () {
+                $("#listado_documentos").html("Un momento por favor.");
+            },
+             success: function (response) {
+                 alert("beneficios actualizados correctamente");
+                // location.reload();
+                //var largo = Object.keys(response.Response).length;
+                //for (var i = 0; i < largo; i++) {
+                //    Seleccionar_Beneficios_Propiedad(response.Response[i].id_ben)
+                //}
+            }
+        });
+        }
+</script>

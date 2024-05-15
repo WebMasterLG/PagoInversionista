@@ -1,0 +1,147 @@
+﻿@model IEnumerable<corretaje.Clases.ListadoRelaciones>
+@using corretaje.clases;
+@using corretaje.Models;
+
+@{ 
+    List<ListadoClientesEnrolamiento> cli = EnrolamientoModels.LLama_Enrolamiento_Carga_Lista(0, 0);
+    string rut_cliente = ViewBag.rut;
+}
+
+
+<style>
+    .barra_busqueda_top_relacionados {
+        padding-bottom: 5px;
+        padding-top: 5px;
+        padding-left: 10px;
+        width: 100%;
+        background-color: white;
+        position: fixed;
+        width: 740px;
+        border-bottom: solid 1px #808080;
+    }
+</style>
+
+    <div class="barra_busqueda_top_relacionados">
+        <label>Clientes</label>
+        <input type="text" name="clientes_listado" id="clientes_listado" list="listado_clientes" style="margin-right: 20px; margin-left: 20px; width: 80%;"/>
+        <img src="~/img/add1-.png" style="cursor: pointer;" id="add_cliente_relacionado" />
+        <datalist id="listado_clientes">
+            @foreach (var x in cli)
+            {
+                <option label="@x.rut | @x.nombre" value="@x.rut | @x.nombre"></option>
+            }
+        </datalist>
+    </div>
+
+<br/><br /><br/>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nombre Relacionado</th>
+            <th>Rut</th>
+            <th>Fecha</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.nombre_relacion</td>
+                <td>@item.rut_relacion</td>
+                <td>@item.fecha</td>
+                <td>
+                    <img src="~/img/eliminar_azul.png" style="cursor: pointer;" id_relacion="@item.id_relacion" class="borrar_relacion_cliente" />
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<script>
+
+    function recargar_relacion() {
+            var param = { "rut": '@rut_cliente' };
+            $.ajax({
+               data: param,
+               url: "@Url.Action("_ListadoRelaciones", "liquidacion")",
+               type: "POST",
+               beforeSend: function(){
+                   $("#contenido_modal_relacionados").html("Un momento por favor.");
+               },
+               success: function (resp) {
+                   $("#contenido_modal_relacionados").html(resp);
+               }
+            });
+    }
+
+    $(function () {
+        $(".borrar_relacion_cliente").click(function () {
+            var param = { "id_relacion": $(this).attr("id_relacion") };
+            $.ajax({
+               data: param,
+               url: "@Url.Action("_EliminarRelacion", "liquidacion")",
+               type: "POST",
+               beforeSend: function(){
+                   //$("#contenido_modal_relacionados").html("Un momento por favor.");
+               },
+                success: function (resp) {
+                    alert(resp);
+                    recargar_relacion();
+               }
+            });
+        });
+
+        $("#add_cliente_relacionado").click(function () {
+            var clientes_listado = $("#clientes_listado").val();
+            var dt_cl = clientes_listado.split(' | ');
+            var param = { "rut_principal": '@rut_cliente', "rut_relacion": dt_cl[0] };
+            $.ajax({
+               data: param,
+               url: "@Url.Action("_AgregarRelacion", "liquidacion")",
+               type: "POST",
+               beforeSend: function(){
+                   //$("#contenido_modal_relacionados").html("Un momento por favor.");
+               },
+                success: function (resp) {
+                    alert(resp);
+                    recargar_relacion();
+               }
+            });
+        });
+
+    });
+</script>
+
+@*<tr>
+    <td>
+        @Html.DisplayFor(modelItem => item.id_relacion)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.rut_principal)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.rut_relacion)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.fecha)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.nombre_principal)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.nombre_relacion)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.estado)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.mensaje)
+    </td>
+    <td>
+        @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+        @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+        @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+    </td>
+</tr>*@

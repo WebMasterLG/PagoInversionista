@@ -1,0 +1,459 @@
+﻿@using corretaje.Models;
+@using corretaje.Clases;
+@using System.Configuration;
+
+@model IEnumerable<corretaje.Clases.liquidaciones>
+
+@{
+
+    int IdUsuario = int.Parse(Request.Cookies["cookiePerfil"]["usuario"].ToString());
+    int idArea = int.Parse(Request.Cookies["cookiePerfil"]["idArea"].ToString());
+    int idSubper = int.Parse(Request.Cookies["cookiePerfil"]["idSubper"].ToString());
+    string DirectorioDocumentos = ConfigurationManager.AppSettings.Get("directoriodocumentos");
+    string DirectorioFacturas = ConfigurationManager.AppSettings.Get("rutaSubirFactura");
+
+    DateTime fecha = new DateTime();
+    fecha = DateTime.Now;
+    string ano = fecha.Year.ToString();
+    string mes = fecha.Month.ToString();
+    string dia = fecha.Day.ToString();
+    if (mes.Length == 1)
+    {
+        mes = "0" + mes;
+    }
+
+    if (dia.Length == 1)
+    {
+        dia = "0" + dia;
+    }
+    string fec = dia + "-" + mes + "-" + ano;
+
+    int monto = 0;
+    int sum_monto = 0;
+    int com_neta = 0;
+    int sum_com_neta = 0;
+    int com_iva = 0;
+    int sum_com_iva = 0;
+    int total_com = 0;
+    int sum_total_com = 0;
+    int descuentos = 0;
+    int sum_descuentos = 0;
+    int a_pagar = 0;
+    int sum_a_pagar = 0;
+    //string ruta = "";
+    //string la_fecha = ViewBag.fec;
+
+    //string fecha2 = ViewBag.fecha2;
+    //string estado_arr = ViewBag.estado_arriendo;
+    //string estado_pag = ViewBag.estado_pago;
+    //int sac = ViewBag.sac_inversionista;
+    //int rut = ViewBag.rut;
+}
+<style>
+    .flota_derecha {
+        float: right;
+    }
+</style>
+@*<div>
+        <input type="checkbox" id="chk_no_calzadas" name="chk_no_calzadas" /> <label class="salmon">Filtrar No Calzadas</label>
+    </div>*@
+<div style="display: none;">
+    <table>
+        <tr>
+            <td><input type="radio" id="visualizar" name="visualizar" value="0" class="visualizar" checked /></td>
+            <td class="label"><span style="color:coral">Todos</span></td>
+            <td>&nbsp;&nbsp;</td>
+            <td><input type="radio" id="visualizar" name="visualizar" value="1" class="visualizar" /></td>
+            <td class="label"><span style="color:coral">Facturas No Calzadas</span></td>
+        </tr>
+    </table>
+</div>
+<table style="font-size:10px;" class="table table-striped table-condensed table-bordered table-hover display" id="tbl_liquidadas">
+    <thead>
+        <tr style="background:#eeefff;">
+            <th><input type="checkbox" name="todos_liquidadas" id="todos_liquidadas"></th>
+            <th>Ejecutivo KAM</th>
+            <th>Mes</th>
+            <th>RUT</th>
+            <th>Propietario</th>
+            <th>Monto</th>
+            <th>Com. Neta</th>
+            <th>Com. Iva.</th>
+            <th>Total Com.</th>
+            <th>Descuentos</th>
+            <th>A Pagar.</th>
+            <th style="width: 100px;">F. Envío</th>
+            @*<th>
+            @Html.DisplayNameFor(model => model.g_file_factura)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.g_file_liquidacion)
+        </th>*@
+
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody id="listado_completo" hidden>
+        @foreach (var item in Model)
+        {
+            monto = int.Parse(Math.Round(double.Parse(item.monto), 0).ToString());
+            sum_monto += monto;
+            com_neta = int.Parse(Math.Round(double.Parse(item.com_neta), 0).ToString());
+            sum_com_neta += com_neta;
+            com_iva = int.Parse(Math.Round(double.Parse(item.com_iva), 0).ToString());
+            sum_com_iva += com_iva;
+            total_com = int.Parse(Math.Round(double.Parse(item.com_total), 0).ToString());
+            sum_total_com += total_com;
+            descuentos = int.Parse(Math.Round(double.Parse(item.descuentos), 0).ToString());
+            sum_descuentos += descuentos;
+            a_pagar = int.Parse(Math.Round(double.Parse(item.a_pagar), 0).ToString());
+            sum_a_pagar += a_pagar;
+
+            string mes_item = DateTime.Parse(item.mes).ToString("MM");
+            switch (mes_item)
+            {
+                case "01":
+                    mes_item = "ene";
+                    break;
+                case "02":
+                    mes_item = "feb";
+                    break;
+                case "03":
+                    mes_item = "mar";
+                    break;
+                case "04":
+                    mes_item = "abr";
+                    break;
+                case "05":
+                    mes_item = "may";
+                    break;
+                case "06":
+                    mes_item = "jun";
+                    break;
+                case "07":
+                    mes_item = "jul";
+                    break;
+                case "08":
+                    mes_item = "ago";
+                    break;
+                case "09":
+                    mes_item = "sept";
+                    break;
+                case "10":
+                    mes_item = "oct";
+                    break;
+                case "11":
+                    mes_item = "nov";
+                    break;
+                case "12":
+                    mes_item = "dic";
+                    break;
+            }
+            mes_item += "-" + DateTime.Parse(item.mes).ToString("yyyy");
+
+            <tr>
+                <td><input type="checkbox" class="chk_envio_mail sel_todos3" name="chk_envio_mail" id="chk_envio_mail" value="@item.rut_propietario|@DateTime.Parse(item.mes).ToString("yyyy-MM-01")|@item.propietario|@item.g_file_liquidacion" data-id="@item.id_pago" data-mes="@mes_item"></td>
+                <td>@item.sac_inversionista</td>
+                <td>
+                    <span style="display:none;">@DateTime.Parse(item.mes).ToString("yyyy-MM-dd")</span>
+                    @DateTime.Parse(item.mes).ToString("dd-MM-yyyy")
+                </td>
+                <td>@item.rut_propietario</td>
+                <td>@item.propietario</td>
+                <td style="text-align: right;" data-order="@monto">$ @String.Format("{0:n0}", monto)</td>
+                <td style="text-align: right;" data-order="@com_neta">$ @String.Format("{0:n0}", com_neta)</td>
+                <td style="text-align: right;" data-order="@com_iva">$ @String.Format("{0:n0}", com_iva)</td>
+                <td style="text-align: right;" data-order="@total_com">$ @String.Format("{0:n0}", total_com)</td>
+                <td style="text-align: right;" data-order="@descuentos">$ @String.Format("{0:n0}", descuentos)</td>
+                <td style="text-align: right;" data-order="@a_pagar">$ @String.Format("{0:n0}", a_pagar)</td>
+                <td style="text-align: center" data-order="@item.f_mail_liquidacion">@item.f_mail_liquidacion</td>
+                <td nowrap="nowrap" style="text-align:right">
+                    @*@if (idSubper != 9)
+                    {
+                        <a href="~/documentos/@item.rut_propietario/@item.g_file_liquidacion" target="_blank"><img src="~/img/pdf.png" title="Ver Liquidación" style="cursor:pointer" /></a>
+                    }*@
+
+
+                    <a href="~/documentos/@item.rut_propietario/@item.g_file_liquidacion" target="_blank"><img src="~/img/pdf.png" title="Ver Liquidación" style="cursor:pointer" /></a>
+
+
+                    @*@if (item.g_archivo_factura != "")
+                    {
+                        <a href="~/@DirectorioFacturas/@item.g_archivo_factura" target="_blank"><img src="~/img/@item.icono_mostrar_ldi" title="Ver Factura" style="cursor:pointer; width: 15px; height: 18px;" /></a>
+                    }
+
+                    @if (item.g_archivo_factura_ilp != "")
+                    {
+                        <a href="~/@DirectorioFacturas/@item.g_archivo_factura_ilp" target="_blank"><img src="~/img/@item.icono_mostrar_ilp" title="Ver Factura" style="cursor:pointer; width: 15px; height: 18px;" /></a>
+                    }*@
+
+                 </td>
+            </tr>
+        }
+    </tbody>
+
+    @*<tbody id="listado_no_calce" hidden>
+            @foreach (var item in LiquidacionModels.Liquidaciones(IdUsuario, la_fecha, estado_arr, estado_pag, 3, fecha2, sac, 0, 0, rut))
+            {
+                monto = int.Parse(Math.Round(double.Parse(item.monto), 0).ToString());
+                sum_monto += monto;
+                com_neta = int.Parse(Math.Round(double.Parse(item.com_neta), 0).ToString());
+                sum_com_neta += com_neta;
+                com_iva = int.Parse(Math.Round(double.Parse(item.com_iva), 0).ToString());
+                sum_com_iva += com_iva;
+                total_com = int.Parse(Math.Round(double.Parse(item.total_com), 0).ToString());
+                sum_total_com += total_com;
+                descuentos = int.Parse(Math.Round(double.Parse(item.descuentos), 0).ToString());
+                sum_descuentos += descuentos;
+                a_pagar = int.Parse(Math.Round(double.Parse(item.a_pagar), 0).ToString());
+                sum_a_pagar += a_pagar;
+                <tr>
+                    <td><input type="checkbox" class="chk_envio_mail sel_todos3" name="chk_envio_mail_2" id="chk_envio_mail_2" value="@item.rut_propietario|@DateTime.Parse(item.mes).ToString("yyyy-MM-01")|@item.propietario|@item.g_file_liquidacion"></td>
+                    <td>@item.sac_inversionista</td>
+                    <td>@DateTime.Parse(item.mes).ToString("dd-MM-yyyy")</td>
+                    <td>@item.rut_propietario</td>
+                    <td>@item.propietario</td>
+                    <td style="text-align: right;" data-order="@monto">$ @String.Format("{0:n0}", monto)</td>
+                    <td style="text-align: right;" data-order="@com_neta">$ @String.Format("{0:n0}", com_neta)</td>
+                    <td style="text-align: right;" data-order="@com_iva">$ @String.Format("{0:n0}", com_iva)</td>
+                    <td style="text-align: right;" data-order="@total_com">$ @String.Format("{0:n0}", total_com)</td>
+                    <td style="text-align: right;" data-order="@descuentos">$ @String.Format("{0:n0}", descuentos)</td>
+                    <td style="text-align: right;" data-order="@a_pagar">$ @String.Format("{0:n0}", a_pagar)</td>
+                    <td style="text-align: center" data-order="@item.f_mail_liquidacion">@item.f_mail_liquidacion</td>
+                    <td nowrap="nowrap" style="text-align:right">
+                        @if (idSubper != 9)
+                        {
+                            <a href="~/documentos/@item.rut_propietario/@item.g_file_liquidacion" target="_blank"><img src="~/img/pdf.png" title="Ver Liquidación" style="cursor:pointer" /></a>
+                        }
+
+                        @if (item.g_archivo_factura != "")
+                        {
+                            <a href="~/@DirectorioFacturas/@item.g_archivo_factura" target="_blank"><img src="~/img/@item.icono_mostrar_ldi" title="Ver Factura" style="cursor:pointer; width: 15px; height: 18px;" /></a>
+                        }
+
+                        @if (item.g_archivo_factura_ilp != "")
+                        {
+                            <a href="~/@DirectorioFacturas/@item.g_archivo_factura_ilp" target="_blank"><img src="~/img/@item.icono_mostrar_ilp" title="Ver Factura" style="cursor:pointer; width: 15px; height: 18px;" /></a>
+                        }
+
+                    </td>
+                </tr>
+            }
+        </tbody>*@
+
+    <tfoot>
+        <tr style="background: #eeefff;">
+            <td colspan="5" style="text-align: right;">Total : </td>
+            <td style="text-align: right;">$ @String.Format("{0:n0}", sum_monto)</td>
+            <td style="text-align: right;">$ @String.Format("{0:n0}", sum_com_neta)</td>
+            <td style="text-align: right;">$ @String.Format("{0:n0}", sum_com_iva)</td>
+            <td style="text-align: right;">$ @String.Format("{0:n0}", sum_total_com)</td>
+            <td style="text-align: right;">$ @String.Format("{0:n0}", sum_descuentos)</td>
+            <td style="text-align: right;">$ @String.Format("{0:n0}", sum_a_pagar)</td>
+            <td colspan="2"></td>
+        </tr>
+    </tfoot>
+</table>
+
+<div id="modal_envio_pdf_por_mail" class="modal" style="width: 600px; height:280px; border: 1px solid #ccc; color: #666677; font-size:12px; padding:20px;  z-index: 5;">
+    <div style="font-size:14px; border-bottom:1px solid #ff8000; padding-bottom:10px; ">
+        <div class="celda"><h3><b>Confirme Envío de Liquidaciones por E-Mails</b></h3></div>
+    </div>
+    <div class="celda" style="width: 100%; margin-top:10px; height:100px" id="resultado_envio_mails">
+        <center>
+            Se enviaran las liquidaciones seleccionadas por E-Mail, esta seguro(a) ?
+        </center>
+    </div>
+    <div style="width:99%; text-align:center;  margin-top: 10px;">
+        <div class="celda ancho" style="width:100px; margin-left:10px">
+            <div class="boton" style="width:89px;" id="btn_envio_pdf_por_mail">SI</div>
+        </div>
+        <div class="celda ancho" style="width:100px; margin-left:10px">
+            <div class="boton" style="width:89px;" onClick="cerrar_ventana('#modal_envio_pdf_por_mail')">NO</div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_resultado_envio_pdf_por_mail" class="modal" style="width: 800px; height:550px; border: 1px solid #ccc; color: #666677; font-size:12px; padding:20px;  z-index: 5;">
+    <div style="font-size:14px; border-bottom:1px solid #ff8000; padding-bottom:10px; ">
+        <div class="celda"><h3><b>Resultado Envío de Liquidaciones por E-Mails</b></h3></div>
+    </div>
+    <div class="celda" style="width: 100%; margin-top:10px; height:400px; overflow: auto;" id="contenido_resultado_envio_mails">
+        <center>
+            Un Momento por favor.
+        </center>
+    </div>
+    <div style="width:99%; text-align:center;  margin-top: 10px;">
+        <div class="celda ancho" style="width:100px; margin-left:10px">
+            <div class="boton" style="width:89px;" onClick="cerrar_ventana('#modal_resultado_envio_pdf_por_mail')">CERRAR</div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+
+        $("#listado_completo").removeAttr("hidden");
+        $('input[name="visualizar"]').click(function () {
+            if ($(this).is(":checked")) {
+
+                var val = $(this).val();
+
+                if (val == 0) {
+                    $("#listado_completo").removeAttr("hidden");
+                    $("#listado_no_calce").attr("hidden", true);
+                } else if (val == 1) {
+                    $("#listado_no_calce").removeAttr("hidden");
+                    $("#listado_completo").attr("hidden", true);
+                }
+
+            }
+        });
+    });
+
+    $(function () {
+
+        $("#btn_envio_pdf_por_mail").click(function () {
+            cerrar_ventana('#modal_envio_pdf_por_mail')
+            pop_up("#modal_resultado_envio_pdf_por_mail", 700, 500);
+            $("#fade").css("display", "none");
+
+            var datos = new Array();
+
+            //var a = $("input:checkbox:checked");
+            //cerrar_ventana('#modal_cambio_estado_liquidar');
+            $('#tbl_liquidadas tbody tr .chk_envio_mail:checked').each(function () {
+                var values = $(this).val().split('|');
+                var g_file_liquidacion = values[3];
+                datos.push(g_file_liquidacion);
+            });
+
+            //_EnvioLiquidacionPorMail
+            var param = { "m_g_file_liquidacion": datos.join('|') };
+            $.ajax({
+                data: param,
+                async: false,
+                url: "@Url.Action("_EnvioLiquidacionPorMail", "liquidacion")",
+                type: "POST",
+                beforeSend: function(){
+                        $("#contenido_resultado_envio_mails").html("Un momento por favor.");
+                },
+                success: function (response) {
+                        $("#contenido_resultado_envio_mails").html(response);
+                }
+            });
+            //var ids_pago = Array.prototype.map.call(a, function (x) {
+            //    if (x.value != "on" && x.id == "id2_aprob")
+            //    {
+            //        //var datos = x.value.split('|');
+            //        //var rut = datos[0];
+            //        //var fecha = datos[1].replace('.','');
+            //        //var id_pago = datos[2];
+            //        //Genera_PDF_Liquidacion(id_pago, rut, fecha)
+            //    }
+            //});
+        })
+
+        $("#btn_enviar_por_mail").click(function () {
+            pop_up("#modal_envio_pdf_por_mail", 700, 500);
+            $("#fade").css("display", "none");
+        });
+
+        var tabla = $("#tbl_liquidadas").DataTable(
+        {
+            "language": {
+                "sProcessing": "Procesando...",
+                "sLengthMenu": "Mostrar _MENU_ registros",
+                "sZeroRecords": "No se encontraron resultados",
+                "sEmptyTable": "Ningún dato disponible en esta tabla",
+                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sSearch": "Buscar:",
+                "sUrl": "",
+                "sInfoThousands": ",",
+                "sLoadingRecords": "Cargando...",
+                "oPaginate": {
+                    "sFirst": "Primero",
+                    "sLast": "Último",
+                    "sNext": "Siguiente",
+                    "sPrevious": "Anterior"
+                },
+                "oAria": {
+                    "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                    "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                }
+            },
+            "iDisplayLength": 50,
+                dom: 'B<"flota_derecha"lf>rtip',
+                buttons: [
+                    {
+                        extend: 'colvis',
+                        text: 'Columnas'
+                    },
+                    {
+                        extend: 'excelHtml5',
+                        text: 'Excel',
+                        footer: true,
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        filename: 'Solicitudes_Devolucion.xlsx'
+                    },
+                    {
+                        extend: 'pdfHtml5',
+                        orientation: 'landscape',
+                        pageSize: 'LEGAL',
+                        text: 'PDF',
+                        footer: true,
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        filename: 'Solicitudes_Devolucion.pdf'
+                    }
+                ]
+            });
+        $("#cant_liqui").html("&nbsp;&nbsp;"+tabla.data().count()+"&nbsp;&nbsp;");
+        //$("#todos_liquidadas").click(function () {
+
+        //    if ($(this).is(':checked')) {
+
+        //        $('#tbl_liquidadas tbody tr').each(function () {
+
+        //            //let sel = tabla.row(this).data().seleccionable;
+
+        //            //if (sel == 1) {
+        //                //$(this).addClass('selected');
+        //                let ch = $(this).find(".chk_envio_mail");
+        //                ch.prop('checked', true);
+        //                //let amount = dataTableVariable.row(this).data().totalActual;
+        //                //cant++;
+        //                //monto += amount;
+        //            //}
+        //        });
+        //    } else {
+        //        $('#tbl_liquidadas tbody tr').each(function () {
+        //            //$(this).removeClass('selected');
+        //            let ch = $(this).find(".chk_envio_mail");
+        //            ch.prop('checked', false);
+        //        });
+        //    }
+
+        //});
+
+        $("#todos_liquidadas").click(function () {
+            var allPages = tabla.cells().nodes();
+
+            if ($(this).is(":checked")) {
+                $(".sel_todos3", allPages).prop("checked", true);
+            } else {
+                $(".sel_todos3", allPages).prop("checked", false);
+            }
+
+        });
+
+    });
+</script>
